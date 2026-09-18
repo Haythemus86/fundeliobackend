@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fundelio-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: fundelio
+      POSTGRES_PASSWORD: fundelio
+      POSTGRES_DB: fundelio
+    ports:
+      - "5432:5432"
+    volumes:
+      - fundelio-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  fundelio-postgres-data:
