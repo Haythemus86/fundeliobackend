@@ -2,19 +2,17 @@ import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsDateString,
+  IsEmail,
   IsInt,
   IsOptional,
   IsString,
-  IsUUID,
+  ValidateNested,
   MaxLength,
   Min,
   MinLength,
 } from 'class-validator';
 
 export class CreateFundraiserDto {
-  @IsUUID()
-  creatorId!: string;
-
   @Type(() => Number)
   @IsInt()
   @Min(1)
@@ -61,4 +59,18 @@ export class CreateFundraiserDto {
   @IsOptional()
   @IsString()
   color?: string;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => GuestFundraiserAccessDto)
+  guestAccess?: GuestFundraiserAccessDto;
+}
+
+export class GuestFundraiserAccessDto {
+  @IsEmail()
+  email!: string;
+
+  @IsString()
+  @MinLength(8)
+  password!: string;
 }

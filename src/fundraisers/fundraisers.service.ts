@@ -2,8 +2,11 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { AccessFundraiserDto } from './dto/access-fundraiser.dto.js';
 import { CreateFundraiserDto } from './dto/create-fundraiser.dto.js';
 import { UpdateFundraiserDto } from './dto/update-fundraiser.dto.js';
 
@@ -37,7 +40,13 @@ export class FundraisersService {
     return fundraiser;
   }
 
-  async create(dto: CreateFundraiserDto) {
+  async create(dto: CreateFundraiserDto, userId?: string) {
+    if (!userId && !dto.guestAccess) {
+      throw new UnauthorizedException(
+        'Connectez-vous ou renseignez un accès invité',
+      );
+    }
+
     const hasGoal = dto.hasGoal ?? true;
     if (hasGoal && (!dto.goalAmount || dto.goalAmount <= 0)) {
       throw new BadRequestException('Un objectif positif est requis');
@@ -46,7 +55,7 @@ export class FundraisersService {
     return this.prisma.$transaction(async (transaction) => {
       const fundraiser = await transaction.fundraiser.create({
         data: {
-          creatorId: dto.creatorId,
+          ...(userId ? { creatorId: userId } : {}),
           categoryId: dto.categoryId,
           title: dto.title.trim(),
           description: dto.description?.trim() ?? '',
@@ -61,15 +70,43 @@ export class FundraisersService {
         },
         include: { category: true },
       });
+
+      if (!userId && dto.guestAccess) {
+        await transaction.anonymousFundraiserAccess.create({
+          data: {
+            fundraiserId: fundraiser.id,
+            email: dto.guestAccess.email.trim().toLowerCase(),
+            passwordHash: await bcrypt.hash(dto.guestAccess.password, 12),
+          },
+        });
+      }
+
       await transaction.activityLog.create({
         data: {
           fundraiserId: fundraiser.id,
-          actorId: dto.creatorId,
+          actorId: userId,
           type: 'FUNDRAISER_CREATED',
         },
       });
       return fundraiser;
     });
+  }
+
+  async access(dto: AccessFundraiserDto) {
+    const accesses = await this.prisma.anonymousFundraiserAccess.findMany({
+      where: { email: dto.email.trim().toLowerCase() },
+      include: { fundraiser: { include: { category: true } } },
+    });
+    const validAccesses = [];
+    for (const access of accesses) {
+      if (await bcrypt.compare(dto.password, access.passwordHash)) {
+        validAccesses.push(access.fundraiser);
+      }
+    }
+    if (!validAccesses.length) {
+      throw new UnauthorizedException('Email ou mot de passe invalide');
+    }
+    return validAccesses;
   }
 
   async update(id: string, dto: UpdateFundraiserDto) {
@@ -79,6 +116,7 @@ export class FundraisersService {
       data: {
         ...dto,
         creatorId: undefined,
+        guestAccess: undefined,
         endDate: dto.endDate ? new Date(dto.endDate) : undefined,
       },
       include: { category: true },
