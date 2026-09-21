@@ -12,6 +12,15 @@ import {
   MinLength,
 } from 'class-validator';
 
+export class GuestFundraiserAccessDto {
+  @IsEmail()
+  email!: string;
+
+  @IsString()
+  @MinLength(8)
+  password!: string;
+}
+
 export class CreateFundraiserDto {
   @Type(() => Number)
   @IsInt()
@@ -64,13 +73,4 @@ export class CreateFundraiserDto {
   @ValidateNested()
   @Type(() => GuestFundraiserAccessDto)
   guestAccess?: GuestFundraiserAccessDto;
-}
-
-export class GuestFundraiserAccessDto {
-  @IsEmail()
-  email!: string;
-
-  @IsString()
-  @MinLength(8)
-  password!: string;
 }
