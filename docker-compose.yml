@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: fundelio
       POSTGRES_DB: fundelio
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - fundelio-postgres-data:/var/lib/postgresql/data
 
