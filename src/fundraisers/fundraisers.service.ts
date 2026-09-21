@@ -52,6 +52,13 @@ export class FundraisersService {
       throw new BadRequestException('Un objectif positif est requis');
     }
 
+    const category = await this.prisma.category.findUnique({
+      where: { id: dto.categoryId },
+    });
+    if (!category) {
+      throw new BadRequestException('La catégorie sélectionnée est introuvable');
+    }
+
     return this.prisma.$transaction(async (transaction) => {
       const fundraiser = await transaction.fundraiser.create({
         data: {
