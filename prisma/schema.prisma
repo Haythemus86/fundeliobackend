@@ -33,16 +33,30 @@ enum ContributionStatus {
 }
 
 model User {
-  id              String    @id @default(uuid()) @db.Uuid
-  email           String    @unique @db.VarChar(255)
-  passwordHash    String    @db.VarChar(255)
-  firstName       String    @db.VarChar(100)
-  lastName        String    @db.VarChar(100)
-  phone           String?   @db.VarChar(30)
-  role            UserRole  @default(USER)
-  emailVerifiedAt DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id                 String    @id @default(uuid()) @db.Uuid
+  email              String    @unique @db.VarChar(255)
+  passwordHash       String    @db.VarChar(255)
+  firstName          String    @db.VarChar(100)
+  lastName           String    @db.VarChar(100)
+  phone              String?   @db.VarChar(30)
+  salutation         String?   @db.VarChar(30)
+  birthDate          DateTime?
+  birthCity          String?   @db.VarChar(120)
+  nationality        String?   @db.VarChar(100)
+  countryOfBirth     String?   @db.VarChar(100)
+  countryOfResidence String?   @db.VarChar(100)
+  profession         String?   @db.VarChar(120)
+  incomeRange        String?   @db.VarChar(100)
+  streetAddress      String?   @db.VarChar(255)
+  city               String?   @db.VarChar(120)
+  postalCode         String?   @db.VarChar(20)
+  profilePhotoFile   String?   @db.VarChar(120)
+  profilePhotoMime   String?   @db.VarChar(50)
+  deletedAt          DateTime?
+  role               UserRole  @default(USER)
+  emailVerifiedAt    DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   fundraisers   Fundraiser[]   @relation("FundraiserCreator")
   contributions Contribution[] @relation("UserContributions")

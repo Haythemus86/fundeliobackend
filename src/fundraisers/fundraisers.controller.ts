@@ -6,12 +6,13 @@ import {
   Param,
   Patch,
   Post,
-  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard.js';
+import type { AuthenticatedRequest } from '../auth/jwt-auth.guard.js';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import { AccessFundraiserDto } from './dto/access-fundraiser.dto.js';
 import { CreateFundraiserDto } from './dto/create-fundraiser.dto.js';
 import { UpdateFundraiserDto } from './dto/update-fundraiser.dto.js';
@@ -22,8 +23,14 @@ export class FundraisersController {
   constructor(private readonly fundraisersService: FundraisersService) {}
 
   @Get()
-  findAll(@Query('creatorId') creatorId?: string) {
-    return this.fundraisersService.findAll(creatorId);
+  findAll() {
+    return this.fundraisersService.findAll();
+  }
+
+  @Get('mine')
+  @UseGuards(JwtAuthGuard)
+  findMine(@Req() request: AuthenticatedRequest) {
+    return this.fundraisersService.findMine(request.user.sub);
   }
 
   @Get(':id')
@@ -46,12 +53,18 @@ export class FundraisersController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateFundraiserDto) {
-    return this.fundraisersService.update(id, dto);
+  @UseGuards(JwtAuthGuard)
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateFundraiserDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.fundraisersService.updateOwned(id, request.user.sub, dto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.fundraisersService.remove(id);
+  @UseGuards(JwtAuthGuard)
+  remove(@Param('id') id: string, @Req() request: AuthenticatedRequest) {
+    return this.fundraisersService.removeOwned(id, request.user.sub);
   }
 }

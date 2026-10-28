@@ -55,7 +55,7 @@ export class CreateFundraiserDto {
 
   @IsOptional()
   @IsDateString()
-  endDate?: string;
+  endDate?: string | null;
 
   @IsOptional()
   @IsString()

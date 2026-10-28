@@ -27,7 +27,9 @@ API NestJS du projet Fundelio, avec PostgreSQL et Prisma.
 
 Le MVP couvre l’authentification email/mot de passe, les catégories, la création
 et la gestion des cagnottes, les contributions invitées et le journal d’activité.
-Les paiements réels, les retraits et le KYC ne sont pas encore activés.
+L’espace compte permet également de consulter et modifier son profil, de changer
+son mot de passe, de gérer une photo de profil et de demander la suppression de
+son compte. Les paiements réels, les retraits et le KYC ne sont pas activés.
 
 ## Project setup
 
@@ -60,8 +62,14 @@ npm run start:prod
 
 - `POST /api/auth/register`
 - `POST /api/auth/login`
+- `GET /api/auth/me` — profil de la session (JWT requis)
+- `PATCH /api/auth/me` — mise à jour des informations personnelles
+- `PATCH /api/auth/me/password` — changement de mot de passe
+- `POST`, `GET` et `DELETE /api/auth/me/profile-photo` — gestion de la photo
+- `DELETE /api/auth/me` — anonymisation du compte, mot de passe actuel requis
 - `GET /api/categories`
 - `GET /api/fundraisers`
+- `GET /api/fundraisers/mine` — cagnottes du propriétaire (JWT requis)
 - `GET /api/fundraisers/:id`
 - `POST /api/fundraisers`
 - `PATCH /api/fundraisers/:id`
@@ -75,6 +83,19 @@ Le schéma Prisma contient les tables `User`, `Category`, `Fundraiser`,
 `Contribution` et `ActivityLog`. Les montants collectés restent dérivés des
 contributions confirmées ; aucune donnée de carte bancaire n’est stockée.
 
+La migration `add_account_profile` ajoute les champs de profil et d’anonymisation.
+Sur une base existante, générez le client puis appliquez les migrations versionnées
+avant de démarrer l’API :
+
+```bash
+npm run db:generate
+npx prisma migrate deploy
+```
+
+Les photos sont stockées dans `uploads/profile-photos` en développement. Le
+dossier est ignoré par Git. Avant un déploiement multi-instance ou en production,
+remplacez ce stockage local par un stockage persistant et partagé.
+
 Commandes utiles :
 
 ```bash
@@ -84,9 +105,10 @@ npm run db:seed
 npx prisma studio
 ```
 
-Avant la production, il faudra ajouter les guards JWT sur les routes privées,
-les refresh tokens, la vérification email, la pagination, un fournisseur de
-paiement avec webhooks idempotents, puis les flux de retrait et KYC.
+Les endpoints de l’espace compte et la gestion privée des cagnottes requièrent
+un JWT. Il reste à étudier les refresh tokens, la vérification email, la
+pagination, un fournisseur de paiement avec webhooks idempotents, puis les flux
+de retrait et KYC.
 
 ## Run tests
 

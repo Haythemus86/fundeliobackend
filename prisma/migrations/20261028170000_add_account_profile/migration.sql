@@ -1,0 +1,15 @@
+ALTER TABLE "User"
+  ADD COLUMN "salutation" VARCHAR(30),
+  ADD COLUMN "birthDate" TIMESTAMP(3),
+  ADD COLUMN "birthCity" VARCHAR(120),
+  ADD COLUMN "nationality" VARCHAR(100),
+  ADD COLUMN "countryOfBirth" VARCHAR(100),
+  ADD COLUMN "countryOfResidence" VARCHAR(100),
+  ADD COLUMN "profession" VARCHAR(120),
+  ADD COLUMN "incomeRange" VARCHAR(100),
+  ADD COLUMN "streetAddress" VARCHAR(255),
+  ADD COLUMN "city" VARCHAR(120),
+  ADD COLUMN "postalCode" VARCHAR(20),
+  ADD COLUMN "profilePhotoFile" VARCHAR(120),
+  ADD COLUMN "profilePhotoMime" VARCHAR(50),
+  ADD COLUMN "deletedAt" TIMESTAMP(3);

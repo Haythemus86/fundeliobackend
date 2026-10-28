@@ -14,13 +14,27 @@ import { UpdateFundraiserDto } from './dto/update-fundraiser.dto.js';
 export class FundraisersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  findAll(creatorId?: string) {
+  findAll() {
     return this.prisma.fundraiser.findMany({
       where: {
         deletedAt: null,
-        ...(creatorId ? { creatorId } : { visibility: 'PUBLIC' }),
+        visibility: 'PUBLIC',
       },
       include: { category: true },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  findMine(creatorId: string) {
+    return this.prisma.fundraiser.findMany({
+      where: { creatorId, deletedAt: null },
+      include: {
+        category: true,
+        contributions: {
+          where: { status: 'CONFIRMED' },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -56,7 +70,9 @@ export class FundraisersService {
       where: { id: dto.categoryId },
     });
     if (!category) {
-      throw new BadRequestException('La catégorie sélectionnée est introuvable');
+      throw new BadRequestException(
+        'La catégorie sélectionnée est introuvable',
+      );
     }
 
     return this.prisma.$transaction(async (transaction) => {
@@ -116,22 +132,35 @@ export class FundraisersService {
     return validAccesses;
   }
 
-  async update(id: string, dto: UpdateFundraiserDto) {
-    await this.findOne(id);
+  async updateOwned(id: string, creatorId: string, dto: UpdateFundraiserDto) {
+    const fundraiser = await this.prisma.fundraiser.findFirst({
+      where: { id, creatorId, deletedAt: null },
+    });
+    if (!fundraiser) throw new NotFoundException('Cagnotte introuvable');
+
     return this.prisma.fundraiser.update({
       where: { id },
       data: {
         ...dto,
         creatorId: undefined,
         guestAccess: undefined,
-        endDate: dto.endDate ? new Date(dto.endDate) : undefined,
+        endDate:
+          dto.endDate === undefined
+            ? undefined
+            : dto.endDate
+              ? new Date(dto.endDate)
+              : null,
       },
       include: { category: true },
     });
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async removeOwned(id: string, creatorId: string) {
+    const fundraiser = await this.prisma.fundraiser.findFirst({
+      where: { id, creatorId, deletedAt: null },
+    });
+    if (!fundraiser) throw new NotFoundException('Cagnotte introuvable');
+
     return this.prisma.fundraiser.update({
       where: { id },
       data: { deletedAt: new Date(), status: 'ARCHIVED' },
